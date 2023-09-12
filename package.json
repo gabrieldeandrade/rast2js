@@ -1,0 +1,28 @@
+{
+  "name": "rast2js",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --loader ts-node/esm index.ts"
+  },
+  "keywords": [
+    "rinha",
+    "transpiler",
+    "esprima",
+    "escodegen"
+  ],
+  "author": "Gabriel Capanema",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.6.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@types/escodegen": "0.0.7",
+    "@types/esprima": "^4.0.3",
+    "escodegen": "^2.1.0",
+    "esprima": "^4.0.1"
+  }
+}

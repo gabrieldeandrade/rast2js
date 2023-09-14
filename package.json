@@ -22,6 +22,7 @@
   "dependencies": {
     "@types/escodegen": "0.0.7",
     "@types/esprima": "^4.0.3",
+    "@types/estree": "^1.0.1",
     "escodegen": "^2.1.0",
     "esprima": "^4.0.1"
   }

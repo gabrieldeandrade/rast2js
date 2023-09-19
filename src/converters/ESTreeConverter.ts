@@ -2,8 +2,8 @@ import {Term} from "../models/Term";
 import {File} from "../models/File";
 import {
     ArrowFunctionExpression, BaseExpression, BinaryExpression, BinaryOperator,
-    BlockStatement,
-    Expression,
+    BlockStatement, CallExpression,
+    Expression, ExpressionStatement,
     Identifier, IfStatement, LogicalExpression, LogicalOperator,
     Program,
     Statement,
@@ -14,6 +14,9 @@ import {Let} from "../models/Let";
 import { Parameter } from "../models/Parameter";
 import {If} from "../models/If";
 import {Binary} from "../models/Binary";
+import {Var} from "../models/Var";
+import {Str} from "../models/Str";
+import {Int} from "../models/Int";
 
 const binaryOpDict = {
     Add: '+',
@@ -39,69 +42,80 @@ export class ESTreeConverter {
 
     constructor(rootTerm: File) {
         this.rootTerm = rootTerm;
-        this.rootVal = this.processTerm(rootTerm.expression, null);
     }
 
     convert(): Program {
+        let rootTerm = this.processTerm(this.rootTerm.expression, null);
         // @ts-ignore
-        this.program.body = [this.rootVal] // TODO change processTerm to return an array of statements;
+        this.program.body = [...rootTerm]
         return this.program;
     }
 
-    private processTerm(term: Term, obj: any): any {
-        console.log("Processing term: ");
+    private processTerm(term: Term, obj: any): any[] {
+        console.log('Processing term: ');
         console.log(term);
 
-        if (term.kind === 'If') {
+        if (term.kind == 'If') {
             const curr: If = term as If;
-            //
-            // const ifStatement: IfStatement = {
-            //     type: "IfStatement",
-            //     test
-            // }
+            const ifStatement: IfStatement = {
+                type: 'IfStatement',
+                test: this.genBinaryExpression(curr.condition as Binary),
+                consequent: this.genBlockStatement(),  // TODO gen body
+            }
+            return [ifStatement];
 
-        } else if (term.kind === 'Let') {
+        } else if (term.kind == 'Let') {
             const curr: Let = term as Let;
             const letDeclaration = this.genVariableDeclaration(curr.name.text)
 
-            if (curr.value.kind === 'Function') {
+            if (curr.value.kind == 'Function') {
                 const currFunction: Function = curr.value as Function;
-                const body: Statement = this.processTerm(currFunction.value, null) as Statement;
+                const statements: Statement[] = this.processTerm(currFunction.value, null) as Statement[];
 
                 // @ts-ignore
                 const initDeclaration : ArrowFunctionExpression  = {
-                    type: "ArrowFunctionExpression",
+                    type: 'ArrowFunctionExpression',
                     params: [...currFunction.parameters.map((param: Parameter) => this.genIdentifier(param.text))],
-                    body: {
-                        type: "BlockStatement",
-                        body: []
-                    }
+                    body: this.genBlockStatement(statements)
                 }
                 letDeclaration.declarations[0].init = initDeclaration;
-
-                if (body != null) {
-                    const blockStatement = initDeclaration.body as BlockStatement;
-                    blockStatement.body = [body];
-                }
-                // TODO implement Let.next
             } else {
                 // TODO implement regular variable attribution
             }
 
-            return letDeclaration;
-        }
+            return [letDeclaration, ...this.processTerm(curr.next, null)];
 
-        return null;
+        } else if (term.kind == 'Print') {
+            return [{
+                type: "ExpressionStatement",
+                expression: {
+                    type: "CallExpression",
+                    callee: {
+                        type: "Identifier",
+                        name: "print"
+                    },
+                    optional: false,
+                    arguments: []
+                } as CallExpression,
+            }] as Statement[];
+        }
+        return [];
+    }
+
+    private genBlockStatement(statements?: Statement[]): BlockStatement {
+        return {
+            type: 'BlockStatement',
+            body: statements != null ? statements : [],
+        } as BlockStatement;
     }
 
     private genBinaryExpression(rinhaExpression: Binary): Expression {
         const rOperator = rinhaExpression.op;
-
-        let binary = false;
+        let binary = true;
 
         let operator: BinaryOperator | LogicalOperator = binaryOpDict[rinhaExpression.op] as BinaryOperator;
         if (rOperator === 'And' || rOperator === 'Or') {
-            binary = true;
+            binary = false;
             operator = operator as LogicalOperator;
         }
 
@@ -116,9 +130,22 @@ export class ESTreeConverter {
     }
 
     private genBinaryExpressionExpression(term: Term): Expression {
-
-
-        return null;
+        let exp = {} as Expression;
+        switch (term.kind) {
+            case 'Int':
+                return {type: 'Literal',
+                        raw: (term as Int).value.toString(),
+                        value: (term as Int).value as number };
+            case 'Str':
+                return {type: 'Literal',
+                        raw: (term as Str).value,
+                        value: (term as Str).value }
+            case 'Var':
+                return {type: 'Identifier',
+                        name: (term as Var).text }
+            // TODO implement and restrict other kinds as required, call recursively if it is an expression
+        }
+        return exp;
     }
 
     private genVariableDeclaration(name: string): VariableDeclaration {

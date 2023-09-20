@@ -7,7 +7,7 @@ import {Program} from "estree";
 
 const startTime: Date = new Date();
 
-const VERSION = '0.1.4'
+const VERSION = '0.1.7'
 
 function importTestFiles() {
 
@@ -34,8 +34,8 @@ function init() {
     console.log("Opening: " + filepath);
     const fileTerm = openRASTFile(filepath);
 
-    console.log("Printing root file term: ");
-    console.log(fileTerm);
+    // console.log("Printing root file term: ");
+    // console.log(fileTerm);
 
     console.log("Converting...");
     const converter = new ESTreeConverter(fileTerm);
@@ -43,7 +43,7 @@ function init() {
     const converted: Program = converter.convert();
     console.log(JSON.stringify(converted, null, 4));
 
-    console.log("Printing result: ")
+    console.log("Printing result: \n")
     console.log(escodegen.generate(converted));
 
     console.log("Done: " + (new Date().getTime() - startTime.getTime()) + 'ms');

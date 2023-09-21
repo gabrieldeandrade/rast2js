@@ -1,17 +1,20 @@
 import {Term} from "../models/Term";
 import {File} from "../models/File";
-import {
-    ArrowFunctionExpression, CallExpression, Expression, Identifier, IfStatement, Program, ReturnStatement, Statement,
-} from "estree";
+import {ArrowFunctionExpression, Expression, IfStatement, Program, Statement,} from "estree";
 import {Function} from "../models/Function";
 import {Let} from "../models/Let";
-import { Parameter } from "../models/Parameter";
+import {Parameter} from "../models/Parameter";
 import {If} from "../models/If";
 import {Binary} from "../models/Binary";
 import {
-    genBinaryExpression, genBlockStatement, genProgram, genVariableDeclaration, genIdentifier, genReturnStatement, genExpression
+    genBinaryExpression,
+    genBlockStatement,
+    genExpression,
+    genIdentifier,
+    genProgram,
+    genReturnStatement,
+    genVariableDeclaration
 } from "./ESTreeNodeGenerators"
-import {Print} from "../models/Print";
 
 export class ESTreeConverter {
     private rinhaFile: File;
@@ -38,10 +41,10 @@ export class ESTreeConverter {
                 type: 'IfStatement',
                 test: genBinaryExpression(curr.condition as Binary),
                 consequent: genBlockStatement([
-                    genReturnStatement(this.buildExpression(curr.then))
+                    genReturnStatement(genExpression(curr.then))
                 ]),
                 alternate: genBlockStatement([
-                    genReturnStatement(this.buildExpression(curr.otherwise))
+                    genReturnStatement(genExpression(curr.otherwise))
                 ])
             }
             return [ifStatement];
@@ -54,43 +57,34 @@ export class ESTreeConverter {
                 const statements: Statement[] = this.nextTerm(currFunction.value) as Statement[];
 
                 // @ts-ignore
-                const initDeclaration : ArrowFunctionExpression  = {
+                const initDeclaration: ArrowFunctionExpression = {
                     type: 'ArrowFunctionExpression',
                     params: [...currFunction.parameters.map((param: Parameter) => genIdentifier(param.text))],
                     body: genBlockStatement(statements)
                 }
                 letDeclaration.declarations[0].init = initDeclaration;
             } else {
-
-                // TODO implement other kinds as needed (eg: combination)
-
+                const expression = genExpression(curr.value);
+                if (this.isValidExpression(expression)) {
+                    letDeclaration.declarations[0].init = expression;
+                }
+                // Done?
             }
             return [letDeclaration, ...this.nextTerm(curr.next)];
-        } else if (term.kind == 'Print') {
-            const curr: Print = term as Print;
-            // TODO substitute with dynamic expression
+        }
+
+        const expression = genExpression(term);
+        if (this.isValidExpression(expression)) {
             return [{
                 type: "ExpressionStatement",
-                expression: {
-                    type: "CallExpression",
-                    callee: {
-                        type: "Identifier",
-                        name: "print"
-                    },
-                    optional: false,
-                    arguments: [this.buildExpression(curr.value)] // TODO implement
-                } as CallExpression,
+                expression
             }] as Statement[];
         }
+
         return [];
     }
 
-    buildExpression(term: Term): Expression {
-        const exp = genExpression(term);
-        if (Object.keys(exp).length > 0) {
-            return exp;
-        }
-
-        return {} as Expression;
+    isValidExpression(expression: Expression) {
+        return Object.keys(expression).length > 0
     }
 }

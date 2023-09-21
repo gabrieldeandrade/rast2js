@@ -9,7 +9,7 @@ const startTime: Date = new Date();
 
 const API_FILE_PATH = './src/api/api.js';
 const DEFAULT_OUTPUT_PATH = './output/out.js';
-const VERSION = '0.1.8'
+const VERSION = '0.1.9'
 
 let filepath: string | undefined;
 
@@ -65,7 +65,6 @@ function addApi(result: string) {
 }
 
 function runOutput() {
-
     // const child = spawn('node $PWD/output/out.js');
     // child.stdout.on('data', (data) => {
     //     console.log(data.toString());

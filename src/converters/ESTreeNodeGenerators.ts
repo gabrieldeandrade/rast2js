@@ -69,7 +69,6 @@ export function genBinaryExpression(rinhaExpression: Binary): Expression {
 export function genExpression(term: Term): Expression {
     let exp = {} as Expression;
     switch (term.kind) {
-        // TODO downgrade api call terms to plain function calls
         case 'Int':
             return {type: 'Literal',
                 raw: (term as Int).value.toString(),
@@ -89,7 +88,7 @@ export function genExpression(term: Term): Expression {
             return genBinaryExpression(term as Binary);
         case 'Call':
             return genCallExpression(term as Call);
-        // terms below were substituted with api calls
+        // terms below are substituted with api.js calls
         case 'Print':
             const print = term as Print;
             return genCallExpression(genRastCallTerm('print', [print.value]));
@@ -108,7 +107,7 @@ export function genExpression(term: Term): Expression {
 }
 
 export function genCallExpression(call: Call) {
-    const callee = call.callee as Var; // TODO MAYBE OTHER KINDS ARE POSSIBLE!
+    const callee = call.callee as Var; // TODO
     return {
         type: "CallExpression",
         callee: {

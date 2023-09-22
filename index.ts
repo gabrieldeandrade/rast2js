@@ -9,44 +9,49 @@ const startTime: Date = new Date();
 
 const API_FILE_PATH = './src/api/api.js';
 const DEFAULT_OUTPUT_PATH = './output/out.js';
-const VERSION = '0.1.9'
+const VERSION = '0.1.10'
 
 let filepath: string | undefined;
+let silent: boolean = true;
 
 function init() {
-    console.log('Rinha AST to Javascript transpiler backend (rast2js). Ver: ' + VERSION);
-    console.log("Started: " + startTime.toISOString());
-
+    silent = process.env.npm_config_mute === 'true';
     filepath = process.env.npm_config_file;
+
+    log('Rinha AST to Javascript (rast2js). Ver: ' + VERSION);
 
     if (filepath == null) {
         throw new Error("Error: Valid file path argument required. eg: npm start --file=/home/username/my_rast.json");
     }
 
-    console.log("Opening: " + filepath);
+    log("Started: " + startTime.toISOString());
+
+    log("Opening: " + filepath);
     const fileTerm = openRASTFile(filepath);
 
-    // console.log("Printing root file term: ");
-    // console.log(fileTerm);
+    // log("Printing root file term: ");
+    // log(fileTerm);
 
-    console.log("Converting...");
+    log("Converting...");
     const converter = new ESTreeConverter(fileTerm);
 
     const converted: Program = converter.convert();
-    console.log(JSON.stringify(converted, null, 4));
+    // log(JSON.stringify(converted, null, 4));
 
     const result = escodegen.generate(converted);
 
-    console.log("Saving result: \n")
-    console.log(result);
+    log("Saving result: \n")
+    log(result);
     const output = saveOutput(addApi(result));
 
-    console.log("Generation done in: " + (new Date().getTime() - startTime.getTime()) + 'ms');
+    log("\nGeneration done in: " + (new Date().getTime() - startTime.getTime()) + 'ms');
 
-    console.log("Running: \n\n");
+    log("Running: \n");
 
-    eval(output);
-    //runOutput();
+    if (!silent) {
+        eval(output);
+        //runOutput();
+    }
 
 }
 
@@ -65,6 +70,7 @@ function addApi(result: string) {
 }
 
 function runOutput() {
+    // TODO fix
     // const child = spawn('node $PWD/output/out.js');
     // child.stdout.on('data', (data) => {
     //     console.log(data.toString());
@@ -81,6 +87,12 @@ function openFile(path: string): string {
 
 function openRASTFile(path: string): File {
     return JSON.parse(openFile(path)) as File;
+}
+
+function log(text: string) {
+    if (!silent) {
+        console.log(text);
+    }
 }
 
 init();

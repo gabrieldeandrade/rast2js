@@ -25,16 +25,12 @@ export class ESTreeConverter {
     }
 
     convert(): Program {
-        let rootTerm = this.nextTerm(this.rinhaFile.expression);
-        // @ts-ignore
+        let rootTerm: Statement[] = this.nextTerm(this.rinhaFile.expression);
         this.program.body = [...rootTerm]
         return this.program;
     }
 
     private nextTerm(term: Term): Statement[] {
-        // console.log('Processing term: ');
-        // console.log(term);
-
         if (term.kind == 'If') {
             const curr: If = term as If;
             const ifStatement: IfStatement = {
@@ -55,7 +51,6 @@ export class ESTreeConverter {
             if (curr.value.kind == 'Function') {
                 const currFunction: Function = curr.value as Function;
                 const statements: Statement[] = this.nextTerm(currFunction.value) as Statement[];
-
                 // @ts-ignore
                 const initDeclaration: ArrowFunctionExpression = {
                     type: 'ArrowFunctionExpression',
@@ -76,7 +71,7 @@ export class ESTreeConverter {
         const expression = genExpression(term);
         if (this.isValidExpression(expression)) {
             return [{
-                type: "ExpressionStatement",
+                type: 'ExpressionStatement',
                 expression
             }] as Statement[];
         }

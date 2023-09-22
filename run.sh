@@ -1,2 +1,2 @@
 #!/bin/bash
-npm run start --file=$PWD/external/rinha-de-compiler/files/print.json
+npm run start --mute=false --file=$PWD/external/rinha-de-compiler/files/combination.json

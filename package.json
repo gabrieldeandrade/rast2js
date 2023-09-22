@@ -1,10 +1,11 @@
 {
   "name": "rast2js",
-  "version": "0.1.9",
-  "description": "",
+  "version": "0.1.10",
+  "description": "Rinha AST to Javascript transformer",
   "main": "index.js",
   "scripts": {
-    "start": "node --loader ts-node/esm index.ts"
+    "start": "node --loader ts-node/esm index.ts",
+    "exec": "node output/out.js"
   },
   "keywords": [
     "rinha",
@@ -21,9 +22,7 @@
   },
   "dependencies": {
     "@types/escodegen": "0.0.7",
-    "@types/esprima": "^4.0.3",
     "@types/estree": "^1.0.1",
-    "escodegen": "^2.1.0",
-    "esprima": "^4.0.1"
+    "escodegen": "^2.1.0"
   }
 }

@@ -7,7 +7,6 @@ import {Parameter} from "../models/Parameter";
 import {If} from "../models/If";
 import {Binary} from "../models/Binary";
 import {
-    genBinaryExpression,
     genBlockStatement,
     genExpression,
     genIdentifier,
@@ -35,7 +34,7 @@ export class ESTreeConverter {
             const curr: If = term as If;
             const ifStatement: IfStatement = {
                 type: 'IfStatement',
-                test: genBinaryExpression(curr.condition as Binary),
+                test: genExpression(curr.condition as Binary),
                 consequent: genBlockStatement([
                     genReturnStatement(genExpression(curr.then))
                 ]),
@@ -51,13 +50,11 @@ export class ESTreeConverter {
             if (curr.value.kind == 'Function') {
                 const currFunction: Function = curr.value as Function;
                 const statements: Statement[] = this.nextTerm(currFunction.value) as Statement[];
-                // @ts-ignore
-                const initDeclaration: ArrowFunctionExpression = {
+                letDeclaration.declarations[0].init = {
                     type: 'ArrowFunctionExpression',
                     params: [...currFunction.parameters.map((param: Parameter) => genIdentifier(param.text))],
                     body: genBlockStatement(statements)
-                }
-                letDeclaration.declarations[0].init = initDeclaration;
+                } as ArrowFunctionExpression;
             } else {
                 const expression = genExpression(curr.value);
                 if (this.isValidExpression(expression)) {

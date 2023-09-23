@@ -6,10 +6,10 @@ Este utilitário transforma a AST [da linguagem Rinha](https://github.com/aripip
 uma AST no formato [ESTree/Esprima](https://github.com/estree/estree) e então utiliza [Escodegen](https://github.com/estools/escodegen) para gerar o 
 código Javascript correspondente.   
 
-Como Executar:
+Como executar (Certifique-se de possuir uma versão recente do node/npm instalada):
 
 ```bash
-npm run start --file=/var/rinha/source.rinha.json
+(npm install) && npm run start --file=/var/rinha/source.rinha.json
 ```
 
 

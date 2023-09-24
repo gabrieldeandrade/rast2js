@@ -16,7 +16,7 @@ Como executar localmente usando Node.JS 18:
 Executar via Docker (O exemplo considera que a AST está no host em /var/rinha/source.rinha.json):
 
 ```bash
-docker build -t rinha . && docker run -v /var/rinha:/input rinha 
+docker build -t rinha . && docker run -v /var/rinha/source.rinha.json:/var/rinha/source.rinha.json rinha 
 ```
 
 

@@ -71,52 +71,59 @@ export function genExpression(term: Term): Expression {
     switch (term.kind) {
         case 'Int':
             return {type: 'Literal',
-                raw: (term as Int).value.toString(),
-                value: Number((term as Int).value)} as Literal;
+                    raw: (term as Int).value.toString(),
+                    value: Number((term as Int).value)} as Literal;
         case 'Str':
             return {type: 'Literal',
-                raw: (term as Str).value,
-                value: (term as Str).value.toString()} as Literal
+                    raw: (term as Str).value,
+                    value: (term as Str).value.toString()} as Literal;
         case 'Bool':
             return {type: 'Literal',
-                raw: (term as Bool).value,
-                value: (term as Bool).value === 'true'} as Literal    // TODO TEST IT!!!!
+                    raw: (term as Bool).value,
+                    value: (term as Bool).value === 'true'} as Literal;    // TODO TEST IT!!!!
         case 'Var':
             return {type: 'Identifier',
-                name: (term as Var).text }
+                name: (term as Var).text } as Identifier;
         case 'Binary':
             return genBinaryExpression(term as Binary);
         case 'Call':
             return genCallExpression(term as Call);
-        // terms below are substituted with api.js calls
+        // terms below are replaced with api.js calls
         case 'Print':
             const print = term as Print;
-            return genCallExpression(genRastCallTerm('print', [print.value]));
+            let value = print.value;
+            if (value.kind === 'Function') {
+                value = {kind: 'Str', value: '<#closure>'} as Str;
+            }
+            return genAPICallExpression('print', [value]);
         case 'Tuple':
             const tuple = term as Tuple;
-            return genCallExpression(genRastCallTerm('newTuple', [tuple.first, tuple.second]));
+            return genAPICallExpression('newTuple', [tuple.first, tuple.second]);
         case 'First':
             const first = term as First;
-            return genCallExpression(genRastCallTerm('getFirst', [first.value]));
+            return genAPICallExpression('getFirst', [first.value]);
         case 'Second':
             const second = term as Second;
-            return genCallExpression(genRastCallTerm('getSecond', [second.value]));
-
+            return genAPICallExpression('getSecond', [second.value]);
     }
     return exp;
 }
 
-export function genCallExpression(call: Call) {
+export function genAPICallExpression(apiCallee: string, args: Term[]): CallExpression {
+   return genCallExpression(genRastCallTerm(apiCallee, args))
+}
+
+export function genCallExpression(call: Call): CallExpression {
     const callee = call.callee as Var; // TODO
     return {
-        type: "CallExpression",
+        type: 'CallExpression',
         callee: {
-            type: "Identifier",
+            type: 'Identifier',
             name: callee.text
         },
         optional: false,
         arguments: call.arguments.map(term => genExpression(term))
-    } as CallExpression;
+    }
 }
 
 export function genVariableDeclaration(name: string): VariableDeclaration {
@@ -158,7 +165,7 @@ export function genProgram(): Program {
 function genRastCallTerm(callee: string, args: Term[]): Call {
     return {
         callee: {
-            kind: "Var",
+            kind: 'Var',
             text: callee
         } as Term,
         arguments: args

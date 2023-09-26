@@ -1,7 +1,10 @@
-FROM node:18-alpine
+FROM ubuntu:latest
 WORKDIR rast2js
 COPY . .
+RUN apt update && apt install -y curl unzip
+ARG NODE_VERSION=18.9.1
+RUN curl https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz | tar -xz -C /usr/local --strip-components 1
+RUN curl -fsSL https://bun.sh/install | bash
 RUN npm install
-CMD [ "./dockercmd.sh"]
-
+CMD [ "./dockercmdturbo.sh"]
 

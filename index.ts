@@ -9,7 +9,7 @@ const startTime: Date = new Date();
 
 const API_FILE_PATH = './src/api/api.js';
 const DEFAULT_OUTPUT_PATH = 'out.js';
-const VERSION = '0.1.11'
+const VERSION = '0.1.12'
 
 let filepath: string | undefined;
 let silent: boolean = true;

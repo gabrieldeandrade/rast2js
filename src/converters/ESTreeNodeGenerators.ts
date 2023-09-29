@@ -1,9 +1,10 @@
 import {
+    ArrowFunctionExpression,
     BinaryOperator,
     BlockStatement,
     CallExpression,
-    Expression,
-    Identifier,
+    Expression, ExpressionStatement,
+    Identifier, IfStatement,
     Literal,
     LogicalOperator,
     Program,
@@ -22,6 +23,10 @@ import {Tuple} from "../models/Tuple";
 import {First} from "../models/First";
 import {Second} from "../models/Second";
 import {Bool} from "../models/Bool";
+import {If} from "../models/If";
+import {Let} from "../models/Let";
+import {Function} from "../models/Function";
+import {Parameter} from "../models/Parameter";
 
 const binaryOpDict = {
     Add: '+',
@@ -39,14 +44,83 @@ const binaryOpDict = {
     Or : '||'
 }
 
-export function genBlockStatement(statements?: Statement[]): BlockStatement {
+export function nextTerm(term: Term): Statement[] {
+    if (term.kind == 'If') {
+        const curr: If = term as If;
+        const ifStatement: IfStatement = {
+            type: 'IfStatement',
+            test: genExpression(curr.condition as Binary),
+            consequent: genBlockStatement([
+                genReturnStatement(genExpression(curr.then))
+            ]),
+            alternate: genBlockStatement([
+                genReturnStatement(genExpression(curr.otherwise))
+            ])
+        }
+        return [ifStatement];
+    } else if (term.kind == 'Let') {
+        const curr: Let = term as Let;
+        const letDeclaration = genVariableDeclaration(curr.name.text)
+
+        const expression = genExpression(curr.value);
+        if (isValidExpression(expression)) {
+            letDeclaration.declarations[0].init = expression;
+        }
+        return [letDeclaration, ...nextTerm(curr.next)];
+    }
+
+    const expression = genExpression(term);
+    if (isValidExpression(expression)) {
+        return [{
+            type: 'ExpressionStatement',
+            expression
+        }] as Statement[];
+    }
+
+    return [];
+}
+
+export function genProgram(): Program {
+    return {
+        type: 'Program',
+        body: [],
+        sourceType: 'script'
+    }
+}
+
+export function shadowzator(statements: Statement[]) {
+    const declared: string[] = [];
+    for (let i = 0; i < statements.length; i++) {
+        if (statements[i].type == 'VariableDeclaration' ) {
+            let stm = statements[i] as VariableDeclaration;
+            let id = stm.declarations[0].id as Identifier;
+            if (!declared.includes(id.name)) {
+                declared.push(id.name);
+                continue;
+            }
+            //already exists!!!!
+            statements[i] = {
+                type: "ExpressionStatement",
+                expression: {
+                    type: "AssignmentExpression",
+                    operator: "=",
+                    left: id,
+                    right: stm.declarations[0].init
+                }
+            } as ExpressionStatement;
+        }
+    }
+    return statements;
+}
+
+function genBlockStatement(statements?: Statement[]): BlockStatement {
     return {
         type: 'BlockStatement',
-        body: statements != null ? statements : [],
+        body: statements != null ? shadowzator(statements) : [],
     } as BlockStatement;
 }
 
-export function genBinaryExpression(rinhaExpression: Binary): Expression {
+function genBinaryExpression(rinhaExpression: Binary): Expression {
     const rOperator = rinhaExpression.op;
     let binary = true;
 
@@ -66,7 +140,7 @@ export function genBinaryExpression(rinhaExpression: Binary): Expression {
     return expression as Expression;
 }
 
-export function genExpression(term: Term): Expression {
+function genExpression(term: Term): Expression {
     let exp = {} as Expression;
     switch (term.kind) {
         case 'Int':
@@ -88,6 +162,8 @@ export function genExpression(term: Term): Expression {
             return genBinaryExpression(term as Binary);
         case 'Call':
             return genCallExpression(term as Call);
+        case 'Function':
+            return genArrowFunctionExpression(term as Function);
         // terms below are replaced with api.js calls
         case 'Print':
             const print = term as Print;
@@ -95,25 +171,45 @@ export function genExpression(term: Term): Expression {
             if (value.kind === 'Function') {
                 value = {kind: 'Str', value: '<#closure>'} as Str;
             }
-            return genAPICallExpression('print', [value]);
+            return genAPICallExpression('rast2js_print', [value]);
         case 'Tuple':
             const tuple = term as Tuple;
-            return genAPICallExpression('newTuple', [tuple.first, tuple.second]);
+            return genAPICallExpression('rast2js_newTuple', [tuple.first, tuple.second]);
         case 'First':
             const first = term as First;
-            return genAPICallExpression('getFirst', [first.value]);
+            return genAPICallExpression('rast2js_getFirst', [first.value]);
         case 'Second':
             const second = term as Second;
-            return genAPICallExpression('getSecond', [second.value]);
+            return genAPICallExpression('rast2js_getSecond', [second.value]);
     }
     return exp;
 }
 
-export function genAPICallExpression(apiCallee: string, args: Term[]): CallExpression {
+function genAPICallExpression(apiCallee: string, args: Term[]): CallExpression {
    return genCallExpression(genRastCallTerm(apiCallee, args))
 }
 
-export function genCallExpression(call: Call): CallExpression {
+function genArrowFunctionExpression(fun: Function): ArrowFunctionExpression {
+    const statements: Statement[] = nextTerm(fun.value) as Statement[];
+
+    const funbody = genBlockStatement(statements);
+    // autoreturn! bcz everybody on discord is doing so
+    if (funbody.body.length > 0) {
+        const lastIdx = funbody.body.length - 1;
+        const val = funbody.body[lastIdx];
+        if (val.type == 'ExpressionStatement') {
+            funbody.body[lastIdx] = genReturnStatement(val.expression);
+        }
+    }
+
+    return {
+        type: 'ArrowFunctionExpression',
+        params: [...fun.parameters.map((param: Parameter) => genIdentifier(param.text))],
+        body: funbody
+    } as ArrowFunctionExpression;
+}
+
+function genCallExpression(call: Call): CallExpression {
     const callee = call.callee as Var; // TODO
     return {
         type: 'CallExpression',
@@ -126,7 +222,7 @@ export function genCallExpression(call: Call): CallExpression {
     }
 }
 
-export function genVariableDeclaration(name: string): VariableDeclaration {
+function genVariableDeclaration(name: string): VariableDeclaration {
     return {
         kind: 'let',
         type: 'VariableDeclaration',
@@ -140,25 +236,17 @@ export function genVariableDeclaration(name: string): VariableDeclaration {
     }
 }
 
-export function genReturnStatement(expression: Expression): ReturnStatement {
+function genReturnStatement(expression: Expression): ReturnStatement {
     return {
         type: "ReturnStatement",
         argument: expression
     }
 }
 
-export function genIdentifier(name: string): Identifier {
+function genIdentifier(name: string): Identifier {
     return {
         type: 'Identifier',
         name
-    }
-}
-
-export function genProgram(): Program {
-    return {
-        type: 'Program',
-        body: [],
-        sourceType: 'script'
     }
 }
 
@@ -171,3 +259,8 @@ function genRastCallTerm(callee: string, args: Term[]): Call {
         arguments: args
     } as Call;
 }
+
+function isValidExpression(expression: Expression) {
+    return Object.keys(expression).length > 0
+}
+

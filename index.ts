@@ -9,7 +9,7 @@ const startTime: Date = new Date();
 
 const API_FILE_PATH = './src/api/api.js';
 const DEFAULT_OUTPUT_PATH = 'out.js';
-const VERSION = '0.1.12'
+const VERSION = process.env.npm_package_version;
 
 let filepath: string | undefined;
 let silent: boolean = true;
@@ -37,6 +37,7 @@ function init() {
 
     const converted: Program = converter.convert();
     // log(JSON.stringify(converted, null, 4));
+    // console.log(JSON.stringify(converted, null, 4));
 
     const result = escodegen.generate(converted);
 

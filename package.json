@@ -1,10 +1,10 @@
 {
   "name": "rast2js",
-  "version": "0.1.12",
+  "version": "0.1.14",
   "description": "Rinha AST to Javascript transformer",
   "main": "index.js",
   "scripts": {
-    "start": "node --loader ts-node/esm index.ts",
+    "start": "node --stack-size=8192 --loader ts-node/esm index.ts",
     "exec": "node output/out.js"
   },
   "keywords": [

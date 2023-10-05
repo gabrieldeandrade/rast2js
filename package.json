@@ -1,7 +1,7 @@
 {
   "name": "rast2js",
-  "version": "0.1.15",
-  "description": "Rinha AST to Javascript transformer",
+  "version": "0.1.16",
+  "description": "Rinha AST to Javascript compiler / JS Rinha API (tuples and print).",
   "main": "index.js",
   "scripts": {
     "start": "node --stack-size=8192 --loader ts-node/esm index.ts",

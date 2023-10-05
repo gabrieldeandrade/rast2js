@@ -3,13 +3,13 @@ import {readFileSync, writeFileSync} from 'fs';
 import {File} from "./src/models/File";
 import {ESTreeConverter} from "./src/converters/ESTreeConverter";
 import {Program} from "estree";
-import {spawn} from "child_process";
-
-const startTime: Date = new Date();
 
 const API_FILE_PATH = './src/api/api.js';
-const DEFAULT_OUTPUT_PATH = 'out.js';
+const OUTPUT_PATH = 'out.js';
+const ESTREE_OUTPUT_PATH = 'out.estree.json';
 const VERSION = process.env.npm_package_version;
+
+const startTime: Date = new Date();
 
 let filepath: string | undefined;
 let silent: boolean = true;
@@ -29,17 +29,10 @@ function init() {
     log("Opening: " + filepath);
     const fileTerm = openRASTFile(filepath);
 
-    // log("Printing root file term: ");
-    // log(fileTerm);
-
     log("Converting...");
-    const converter = new ESTreeConverter(fileTerm);
+    const converted: Program = new ESTreeConverter(fileTerm).convert();
 
-    const converted: Program = converter.convert();
-    //log(JSON.stringify(converted, null, 4));
-    // console.log(JSON.stringify(converted, null, 4));
-
-    saveESTreeOutput(JSON.stringify(converted));
+    saveESTreeOutput(JSON.stringify(converted, null, 4));
 
     const result = escodegen.generate(converted);
 
@@ -50,21 +43,18 @@ function init() {
     log("\nGeneration done in: " + (new Date().getTime() - startTime.getTime()) + 'ms');
 
     log("Running: \n");
-
     if (!silent) {
         eval(output);
-        //runOutput();
     }
-
 }
 
 function saveOutput(output: string)  {
-    writeFileSync(DEFAULT_OUTPUT_PATH, output);
+    writeFileSync(OUTPUT_PATH, output);
     return output;
 }
 
 function saveESTreeOutput(output: string)  {
-    writeFileSync('rinha.estree.json', output);
+    writeFileSync(ESTREE_OUTPUT_PATH, output);
     return output;
 }
 
@@ -77,18 +67,6 @@ function addApi(result: string) {
     return output + result;
 }
 
-function runOutput() {
-    // TODO fix
-    // const child = spawn('node $PWD/output/out.js');
-    // child.stdout.on('data', (data) => {
-    //     console.log(data.toString());
-    // });
-    //
-    // child.stderr.on('data', (data) => {
-    //     console.error(`Erro:\n${data}`);
-    // });
-}
-
 function openFile(path: string): string {
     return readFileSync(path, 'utf-8');
 }
@@ -99,7 +77,7 @@ function openRASTFile(path: string): File {
 
 function log(text: string) {
     if (!silent) {
-        console.log(text);
+        console.log('[rast2js] ' + text);
     }
 }
 

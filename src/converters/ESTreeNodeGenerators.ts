@@ -176,22 +176,22 @@ function genExpression(term: Term): Expression {
             if (value.kind === 'Function') {
                 value = {kind: 'Str', value: '<#closure>'} as Str;
             }
-            return genAPICallExpression('rast2js_print', [value]);
+            return genAPICallExpression('print', [value]);
         case 'Tuple':
             const tuple = term as Tuple;
-            return genAPICallExpression('rast2js_newTuple', [tuple.first, tuple.second]);
+            return genAPICallExpression('newTuple', [tuple.first, tuple.second]);
         case 'First':
             const first = term as First;
-            return genAPICallExpression('rast2js_getFirst', [first.value]);
+            return genAPICallExpression('getFirst', [first.value]);
         case 'Second':
             const second = term as Second;
-            return genAPICallExpression('rast2js_getSecond', [second.value]);
+            return genAPICallExpression('getSecond', [second.value]);
     }
     return exp;
 }
 
 function genAPICallExpression(apiCallee: string, args: Term[]): CallExpression {
-   return genCallExpression(genRastCallTerm(apiCallee, args))
+   return genCallExpression(genRastCallTerm('__' + apiCallee, args))
 }
 
 function genArrowFunctionExpression(fun: Function): ArrowFunctionExpression {
@@ -215,7 +215,7 @@ function genArrowFunctionExpression(fun: Function): ArrowFunctionExpression {
 }
 
 function genCallExpression(call: Call): CallExpression {
-    const callee = call.callee as Var; // TODO
+    const callee = call.callee as Var;
     return {
         type: 'CallExpression',
         callee: {

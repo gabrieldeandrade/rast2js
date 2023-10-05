@@ -9,7 +9,7 @@ código Javascript correspondente.
 Como executar localmente usando Node.JS 18:
 
 ```bash
-(npm install) && npm run start --file=/var/rinha/source.rinha.json
+(npm install) && npm run start --file=src/files/rinha/test.rinha.json
 ```
 
 

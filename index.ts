@@ -36,8 +36,10 @@ function init() {
     const converter = new ESTreeConverter(fileTerm);
 
     const converted: Program = converter.convert();
-    // log(JSON.stringify(converted, null, 4));
+    //log(JSON.stringify(converted, null, 4));
     // console.log(JSON.stringify(converted, null, 4));
+
+    saveESTreeOutput(JSON.stringify(converted));
 
     const result = escodegen.generate(converted);
 
@@ -58,6 +60,11 @@ function init() {
 
 function saveOutput(output: string)  {
     writeFileSync(DEFAULT_OUTPUT_PATH, output);
+    return output;
+}
+
+function saveESTreeOutput(output: string)  {
+    writeFileSync('rinha.estree.json', output);
     return output;
 }
 

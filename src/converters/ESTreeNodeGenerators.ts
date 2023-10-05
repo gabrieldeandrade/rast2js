@@ -50,12 +50,8 @@ export function nextTerm(term: Term): Statement[] {
         const ifStatement: IfStatement = {
             type: 'IfStatement',
             test: genExpression(curr.condition as Binary),
-            consequent: genBlockStatement([
-                genReturnStatement(genExpression(curr.then))
-            ]),
-            alternate: genBlockStatement([
-                genReturnStatement(genExpression(curr.otherwise))
-            ])
+            consequent: genBlockStatement(replaceLastStatementWithReturn(nextTerm(curr.then))),
+            alternate:  genBlockStatement(replaceLastStatementWithReturn(nextTerm(curr.otherwise))),
         }
         return [ifStatement];
     } else if (term.kind == 'Let') {
@@ -88,22 +84,22 @@ export function genProgram(): Program {
     }
 }
 
-export function shadowzator(statements: Statement[]) {
+export function shadowize(statements: Statement[]) {
     const declared: string[] = [];
     for (let i = 0; i < statements.length; i++) {
         if (statements[i].type == 'VariableDeclaration' ) {
-            let stm = statements[i] as VariableDeclaration;
-            let id = stm.declarations[0].id as Identifier;
+            const stm = statements[i] as VariableDeclaration;
+            const id = stm.declarations[0].id as Identifier;
             if (!declared.includes(id.name)) {
                 declared.push(id.name);
                 continue;
             }
             //already exists!!!!
             statements[i] = {
-                type: "ExpressionStatement",
+                type: 'ExpressionStatement',
                 expression: {
-                    type: "AssignmentExpression",
-                    operator: "=",
+                    type: 'AssignmentExpression',
+                    operator: '=',
                     left: id,
                     right: stm.declarations[0].init
                 }
@@ -113,10 +109,19 @@ export function shadowzator(statements: Statement[]) {
     return statements;
 }
 
+function replaceLastStatementWithReturn(statements: Statement[]): Statement[] {
+    if (statements.length == 0 || statements[statements.length - 1].type !== 'ExpressionStatement') {
+        return statements;
+    }
+    const lastIdx = statements.length - 1;
+    statements[lastIdx] = genReturnStatement((statements[lastIdx] as ExpressionStatement).expression);
+    return statements;
+}
+
 function genBlockStatement(statements?: Statement[]): BlockStatement {
     return {
         type: 'BlockStatement',
-        body: statements != null ? shadowzator(statements) : [],
+        body: statements != null ? shadowize(statements) : [],
     } as BlockStatement;
 }
 
@@ -237,9 +242,10 @@ function genVariableDeclaration(name: string): VariableDeclaration {
 }
 
 function genReturnStatement(expression: Expression): ReturnStatement {
+    const argument: Expression | null = isValidExpression(expression) ? expression : null;
     return {
-        type: "ReturnStatement",
-        argument: expression
+        type: 'ReturnStatement',
+        argument: argument
     }
 }
 

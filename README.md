@@ -6,7 +6,7 @@ Este utilitário transforma a AST da linguagem [Rinha](https://github.com/aripip
 uma AST no formato [ESTree/Esprima](https://github.com/estree/estree) e então utiliza [Escodegen](https://github.com/estools/escodegen) para gerar o 
 código Javascript correspondente.   
 
-Como executar localmente usando Node.JS 18:
+Como executar localmente usando Node.JS 18.16 (nvm install 18.16 && nvm use 18.16):
 
 ```bash
 (npm install) && npm run start --file=src/files/rinha/test.rinha.json

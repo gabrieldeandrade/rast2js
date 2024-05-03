@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:18.16-alpine3.18
 WORKDIR rast2js
 COPY . .
 RUN npm install
